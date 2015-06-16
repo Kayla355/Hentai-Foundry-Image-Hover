@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
-// @match        //www.hentai-foundry.com/*
+// @match        *www.hentai-foundry.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @icon         http://img.hentai-foundry.com/themes/Hentai/favicon.ico
