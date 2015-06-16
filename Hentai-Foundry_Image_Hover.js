@@ -1,21 +1,22 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.1
+// @version      0.2
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
-// @match        *www.hentai-foundry.com/*
+// @match        www.hentai-foundry.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @icon         http://img.hentai-foundry.com/themes/Hentai/favicon.ico
 // @require      http://code.jquery.com/jquery-2.1.3.min.js
 // @require      https://raw.githubusercontent.com/customd/jquery-visible/master/jquery.visible.min.js
+// @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
 // ==/UserScript==
 
 // Options //
 var imagePosition = "bottom-right"   // Default: bottom-right  || ´Options are: top-left, top-right, bottom-left, bottom-right
 var hoverSize     = 512;             // Default: 512           ||  Size of the image that will show up in pixels.
-                                     //                        ||
+//                        ||
 var preloadAll    = false;           // Default: false         ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
 var smartPreload  = true;            // Default: true          ||  Smart pre-load of images by loading only the currently visible elements.
 
@@ -176,7 +177,6 @@ if(smartPreload) {
 
 // Listen for update to the pre-load progress.
 $(document).on("plStatusChange", function() {
-    console.dir(plProgress);
     $('.image-hover div div').css({width: plProgress.percent + "%"});
     $('.image-hover div center').text(plProgress.current+"/"+plProgress.total+" ("+plProgress.percent+"%)");
 
@@ -261,7 +261,8 @@ function loadImages() {
         var imgSrc = "http://pictures.hentai-foundry.com/" + cat + "/" + link.slice(0, -1);
 
         loaded[id] = {};
-
+        
+        var fail = 0;
 
         imageExt.forEach(function(ext) {
             imageExists(imgSrc + ext, function(exists) {
@@ -273,13 +274,21 @@ function loadImages() {
                     loaded[id].target  = e.target;
                     loaded[id].from    = from;
 
-                    if(loaded[id].ext && from !== "hover" && from !== "smartload") {
+                    if(loaded[id].ext && from === "preload") {
                         plProgress.realtotal++;
                         //return;
                     }
 
                     createImages(loaded[id], thumbs.length);
+                } else {
+                fail++;
+                if(fail === imageExt.length) {
+                    console.log("Loading Progress: ", done +" / "+ thumbs.length);
+                    done++;
+                    loaded[id].ext = "failed";
+                    console.error("Could not determine file type:", imgSrc);
                 }
+            }
             });
         });
     });
@@ -289,11 +298,14 @@ function loadImages() {
 // Create the image and load it before attaching it to the div.
 function createImages(obj, total) {
     var image = new Image();
-    plProgress.total = total;
 
-    if(plProgress.realtotal > plProgress.total) {
-        plProgress.total = plProgress.realtotal;
+    if(obj.from === "preload") {
+        plProgress.total = total;
+        if(plProgress.realtotal > plProgress.total && obj.from === "preload") {
+            plProgress.total = plProgress.realtotal;
+        }
     }
+
 
     if(obj.status === "done") {
         if(loaded[obj.id].image) {
@@ -346,11 +358,18 @@ function createImages(obj, total) {
 
 // Prototype for checking each of the image extensions listed in 'imageExt'.
 Array.prototype.eachImage = function(obj) {
+    var fail = 0;
     this.forEach(function(ext) {
         imageExists(obj.src + ext, function(exists) {
             if(exists) {
                 obj.ext = ext;
                 createImages(obj);
+            } else {
+                fail++;
+                console.log(imageExt.length);
+                if(fail === imageExt.length) {
+                
+                }
             }
         });
     });
