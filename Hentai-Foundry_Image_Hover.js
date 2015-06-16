@@ -272,11 +272,12 @@ function loadImages() {
                     loaded[id].ext     = ext;
                     loaded[id].target  = e.target;
                     loaded[id].from    = from;
-                    console.log("Thumb done", loaded[id]);
+
                     if(loaded[id].ext && from !== "hover" && from !== "smartload") {
                         plProgress.realtotal++;
                         //return;
                     }
+
                     createImages(loaded[id], thumbs.length);
                 }
             });
@@ -417,7 +418,6 @@ function keepInside() {
         }
     } else {
         if(image.height + screen.naturalHeight - 1<= screen.height) {
-            console.log("asdasdfasdf");
             mouse.Y = mouse.Y - image.height + (screen.height - screen.naturalHeight) + 1;
         }
     }
