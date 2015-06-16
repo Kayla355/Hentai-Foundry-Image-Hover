@@ -4,11 +4,10 @@
 // @version      0.1
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
-// @match        *www.hentai-foundry.com/*
+// @match        //www.hentai-foundry.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @icon         http://img.hentai-foundry.com/themes/Hentai/favicon.ico
-// @updateURL    
 // @require      http://code.jquery.com/jquery-2.1.3.min.js
 // @require      https://raw.githubusercontent.com/customd/jquery-visible/master/jquery.visible.min.js
 // ==/UserScript==
@@ -16,7 +15,7 @@
 // Options //
 var imagePosition = "bottom-right"   // Default: bottom-right  || ´Options are: top-left, top-right, bottom-left, bottom-right
 var hoverSize     = 512;             // Default: 512           ||  Size of the image that will show up in pixels.
-//                        ||
+                                     //                        ||
 var preloadAll    = false;           // Default: false         ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
 var smartPreload  = true;            // Default: true          ||  Smart pre-load of images by loading only the currently visible elements.
 
@@ -93,8 +92,8 @@ var scrollTimer;
 // Event Listeners //
 
 // Start preloading images
-if(preloadImages || smartPreload) {
-    if(preloadImages) {
+if(preloadAll || smartPreload) {
+    if(preloadAll) {
         smartPreload = false;
     }
     loadImages();
@@ -159,7 +158,7 @@ $("img.thumb").on({
 if(smartPreload) {
     $(document).on('scroll', function() {
         console.log("Scrolled, loading is", loadingStatus);
-        if(preloadImages || smartPreload) {
+        if(preloadAll || smartPreload) {
             clearTimeout(scrollTimer);
             scrollTimer = setTimeout(function() {
                 if(loadingStatus === "active") {
