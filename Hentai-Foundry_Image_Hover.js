@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.2
+// @version      0.2.1
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        www.hentai-foundry.com/*
@@ -11,14 +11,15 @@
 // @require      http://code.jquery.com/jquery-2.1.3.min.js
 // @require      http://cdn.jsdelivr.net/jquery.visible/1.1.0/jquery.visible.min.js
 // @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
+// @history      0.2.1 Fixed some issues with loading getting stuck.
 // ==/UserScript==
 
 // Options //
-var imagePosition = "bottom-right"   // Default: bottom-right  || ´Options are: top-left, top-right, bottom-left, bottom-right
-var hoverSize     = 512;             // Default: 512           ||  Size of the image that will show up in pixels.
-//                        ||
-var preloadAll    = false;           // Default: false         ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
-var smartPreload  = true;            // Default: true          ||  Smart pre-load of images by loading only the currently visible elements.
+var imagePosition = "bottom-right"   // Default: bottom-right   || ´Options are: top-left, top-right, bottom-left, bottom-right
+var hoverSize     = 512;             // Default: 512            ||  Size of the image that will show up in pixels.
+//                                                              ||
+var preloadAll    = false;           // Default: false          ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
+var smartPreload  = true;            // Default: true           ||  Smart pre-load of images by loading only the currently visible elements.
 
 // Styles //
 GM_addStyle(".image-hover {"
@@ -224,7 +225,7 @@ function loadImages() {
     var thumbs = $('img.thumb');
     var from   = "preload";
     loadingStatus = "active";
-    done = 1;
+    done = 0;
 
     if(smartPreload) {
         from = "smartload";
@@ -245,6 +246,11 @@ function loadImages() {
                 return false;
             }
         });
+    }
+    if(thumbs.length === 0) {
+        console.log("Finished loading images");
+        loadingStatus = "inactive";
+        $(document).trigger("loadingReady");
     }
 
     thumbs.each(function(i) {
@@ -283,8 +289,8 @@ function loadImages() {
                 } else {
                 fail++;
                 if(fail === imageExt.length) {
-                    console.log("Loading Progress: ", done +" / "+ thumbs.length);
                     done++;
+                    console.log("Loading Progress: ", done +" / "+ thumbs.length);
                     loaded[id].ext = "failed";
                     console.error("Could not determine file type:", imgSrc);
                 }
@@ -332,12 +338,16 @@ function createImages(obj, total) {
                 console.info("["+obj.id+"]", "Image loaded:", obj.image.src);
                 $('#'+obj.id).trigger("imageLoaded");
             }
-            console.log("Loading Progress: ", done +" / "+ total);
             done++;
+            console.log("Loading Progress: ", done +" / "+ total);
             if(done === total) {
                 console.log("Finished loading images");
                 loadingStatus = "inactive";
-                $(document).trigger("loadingStopped");
+                $(document).trigger("loadingReady");
+            } else if((total - done) <= Math.round(total/3)) {
+                console.log("Accepting new Images");
+                loadingStatus = "ready";
+                $(document).trigger("loadingReady");
             }
         }
     } else if(obj.from === "preload") {
@@ -366,9 +376,11 @@ Array.prototype.eachImage = function(obj) {
                 createImages(obj);
             } else {
                 fail++;
-                console.log(imageExt.length);
                 if(fail === imageExt.length) {
-                
+                    done++;
+                    console.log("Loading Progress: ", done +" / "+ thumbs.length);
+                    loaded[id].ext = "failed";
+                    console.error("Could not determine file type:", imgSrc);
                 }
             }
         });
