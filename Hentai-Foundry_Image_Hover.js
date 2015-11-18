@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.2.1
+// @version      0.2.2
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        www.hentai-foundry.com/*
@@ -12,11 +12,12 @@
 // @require      http://cdn.jsdelivr.net/jquery.visible/1.1.0/jquery.visible.min.js
 // @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
 // @history      0.2.1 Fixed some issues with loading getting stuck.
+// @history		 0.2.2 Added more image positions.
 // ==/UserScript==
 
 // Options //
-var imagePosition = "bottom-right"   // Default: bottom-right   || ´Options are: top-left, top-right, bottom-left, bottom-right
-var hoverSize     = 512;             // Default: 512            ||  Size of the image that will show up in pixels.
+var imagePosition = "bottom-right"   // Default: bottom-right   || ´Options are: top-left, top-right, bottom-left, bottom-right, middle-left, middle-right
+var hoverSize     = 900;             // Default: 512            ||  Size of the image that will show up in pixels.
 //                                                              ||
 var preloadAll    = false;           // Default: false          ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
 var smartPreload  = true;            // Default: true           ||  Smart pre-load of images by loading only the currently visible elements.
@@ -84,6 +85,7 @@ var imageExt         = [".jpg", ".jpeg", ".png", ".gif"];
 var loaded           = {};
 var plProgress       = {current: 0, total: 0, percent: "0%"};
 var loadingStatus    = "inactive";
+var done;
 // Timers
 var hoverTimer;
 var hoverTimerStart;
@@ -114,7 +116,7 @@ $("img.thumb").on({
         if(hovering) {
             keepInside();
         }
-        //console.log("X: "+ e.pageX +", Y: "+ e.pageY);
+        //console.log("X:", e.pageX, ", Y:", e.pageY);
     },
     mouseenter: function(e) {
         // Create links, id, etc.
@@ -424,7 +426,12 @@ function keepInside() {
     try {
         if(imagePosition === "bottom-left" || imagePosition === "bottom-right") {
             image.height = (mouse.Y - 2) + image.naturalHeight;
-        } else {
+        } else if(imagePosition === "middle-left" || imagePosition === "middle-right") {
+			image.height = { 
+				top: (mouse.Y - 2) - (image.naturalHeight / 2), 	// For checking if colliding with top
+				bottom: (mouse.Y - 2) + (image.naturalHeight / 2) 	// For checking if colliding with bottom
+			}
+		} else {
             image.height = (mouse.Y - 2) - image.naturalHeight;
         }
     } catch(e) {
@@ -433,7 +440,7 @@ function keepInside() {
 
     // Get image width, relative to mouse position.
     try {
-        if(imagePosition === "top-right" || imagePosition === "bottom-right") {
+        if(imagePosition === "top-right" || imagePosition === "bottom-right" || imagePosition === "middle-right") {
             image.width = (mouse.X + 2) + image.naturalWidth;
         } else {
             image.width = (mouse.X + 2) - image.naturalWidth;
@@ -442,22 +449,33 @@ function keepInside() {
         image.width = 0;
     }
 
-    // Check if image is outside of screen
+    // Check if image height is outside of screen
+	  // If on bottom 
     if(imagePosition === "bottom-left" || imagePosition === "bottom-right") {
         if(screen.height <= image.height) {
             mouse.Y = mouse.Y - (image.height - screen.height);
         }
-    } else {
-        if(image.height + screen.naturalHeight - 1<= screen.height) {
+	  // ELSE IF in middle
+    } else if(imagePosition === "middle-left" || imagePosition === "middle-right") {
+		if(screen.height <= image.height.bottom) {
+            mouse.Y = mouse.Y - (image.height.bottom - screen.height);
+        } else if(image.height.top + screen.naturalHeight - 1 <= screen.height) {
+            mouse.Y = mouse.Y - image.height.top + (screen.height - screen.naturalHeight) + 1;
+        }
+	  // ELSE on top
+	} else {
+        if(image.height + screen.naturalHeight - 1 <= screen.height) {
             mouse.Y = mouse.Y - image.height + (screen.height - screen.naturalHeight) + 1;
         }
     }
 
-    // Check if image is outside of screen
-    if(imagePosition === "top-right" || imagePosition === "bottom-right") {
+    // Check if image width is outside of screen
+	  // IF on right side
+    if(imagePosition === "top-right" || imagePosition === "bottom-right" || imagePosition === "middle-right") {
         if(screen.width <= image.width) {
             mouse.X = mouse.X - (image.width - screen.width);
         }
+	  // ELSE on left side
     } else {
         if (image.width <= 3){
             mouse.X = mouse.X + ~image.width + 5;
@@ -478,7 +496,19 @@ function keepInside() {
             image.Y = mouse.Y;
             image.X = mouse.X - (image.naturalWidth);
             break;
-        default:
+		case "bottom-right":
+			image.Y = mouse.Y;
+            image.X = mouse.X;
+			break;
+		case "middle-left":
+			image.Y = mouse.Y - (image.naturalHeight / 2);
+            image.X = mouse.X - (image.naturalWidth);
+			break;
+		case "middle-right":
+			image.Y = mouse.Y - (image.naturalHeight / 2);
+            image.X = mouse.X;
+        	break;
+		default:
             image.Y = mouse.Y;
             image.X = mouse.X;
             break;
