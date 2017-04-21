@@ -443,7 +443,6 @@ function keepInside() {
 			width: parseFloat($("body").css("marginLeft"))
 		}
     };
-	console.log(screen);
 
     // Get image height, relative to mouse position.
     try {
