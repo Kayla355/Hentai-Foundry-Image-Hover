@@ -14,7 +14,7 @@
 // @icon         http://img.hentai-foundry.com/themes/Hentai/favicon.ico
 // @require      http://code.jquery.com/jquery-2.1.3.min.js
 // @require      http://cdn.jsdelivr.net/jquery.visible/1.1.0/jquery.visible.min.js
-// @require      https://gitcdn.xyz/repo/Kayla355/MonkeyConfig/master/monkeyconfig.js
+// @require      https://gitcdn.xyz/repo/Kayla355/MonkeyConfig/d152bb448db130169dbd659b28375ae96e4c482d/monkeyconfig.js
 // @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
 // @history      0.2.1 Fixed some issues with loading getting stuck.
 // @history      0.2.2 Added more image positions.
