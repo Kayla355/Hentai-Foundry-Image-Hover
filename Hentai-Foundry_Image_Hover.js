@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.2.4
+// @version      0.2.5
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        www.hentai-foundry.com/*
@@ -12,14 +12,15 @@
 // @require      http://cdn.jsdelivr.net/jquery.visible/1.1.0/jquery.visible.min.js
 // @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
 // @history      0.2.1 Fixed some issues with loading getting stuck.
-// @history	 0.2.2 Added more image positions.
+// @history	 	 0.2.2 Added more image positions.
 // @history 	 0.2.3 Fixed the images not loading with the new HF theme. Some issues still remain with screen boundries, works when combined with my CSS fixes script.
 // @history 	 0.2.4 Fixed the image boundries and also fixed an issue with the title showing up over the image somtimes.
+// @history 	 0.2.5 Fixed an issue where images were still attempting to cache even after having already been cached.
 // ==/UserScript==
 
 // Options //
 var imagePosition = "middle-right";   // Default: middle-right   || ´Options are: top-left, top-right, bottom-left, bottom-right, middle-left, middle-right
-var hoverSize     = 512;              // Default: 512            ||  Size of the image that will show up in pixels. Recommend you increase this if you have a larger resolution.
+var hoverSize     = 800;              // Default: 512            ||  Size of the image that will show up in pixels. Recommend you increase this if you have a larger resolution.
 //                                                               ||
 var preloadAll    = false;            // Default: false          ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
 var smartPreload  = true;             // Default: true           ||  Smart pre-load of images by loading only the currently visible elements.
@@ -91,7 +92,7 @@ GM_addStyle(".image-hover {"
 var hovering         = false;
 var mouse            = {X: 0, Y: 0};
 var imageExt         = [".jpg", ".jpeg", ".png", ".gif"];
-var loaded           = {};
+loaded           = {};
 var plProgress       = {current: 0, total: 0, percent: "0%"};
 var loadingStatus    = "inactive";
 var oldTitle		 = "";
@@ -227,7 +228,7 @@ function hoverFunc(obj) {
     if(plProgress.current != plProgress.total) {
         $('#hoverLoader').remove();
         $('.image-hover').append('<div id="pl-background"><div id="pl-fill"></div><center></center></div>');
-    } else if (loaded[id]) {
+    } else if (validateImage(id)) {
         if(loaded[id].status === "done") {
             loaded[id].from = "hover";
             createImages(loaded[id]);
@@ -250,14 +251,12 @@ function loadImages() {
         from = "smartload";
         console.log("Filtering!");
         thumbs = $('.thumb').filter(function(e) {
-            var id = this.style["background-image"].match(/(?:pid=)([0-9]*)/);
-			if(!id) return false;
+            var id = this.style["background-image"].match(/pid=[0-9]*/);
+            id = (id.length > 0) ? parseInt(id[0].slice(4)):null;
+			if(!id || typeof id !== "number") return false;
             if($(this).visible( true )) {
-                if(loaded[id]) {
-                    if(loaded[id].image) {
-                        console.info("["+id+"]", "Image already loaded:", loaded[id].image.src);
-                    }
-                    return false;
+                if(validateImage(id)) {
+                 	console.info("["+id+"]", "Image already loaded:", loaded[id].image.src);
                 }
                 //console.log("Visible:",$(this).visible( true ));
                 return true;
@@ -416,6 +415,25 @@ function imageExists(url, callback) {
             callback(response.status < 400);
         }
     });
+}
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+// Validate the existing image object
+function validateImage(id) {
+	if(loaded[id] == null) return false;
+
+	if(loaded[id].image) return true;
+
+	if(loaded[id].length > 0) return true;
+	if(loaded[id].length === 0) return false;
+
+	if(typeof loaded[id] !== "object") return false;
+
+	for(var key in loaded[id]) {
+	    if (hasOwnProperty.call(loaded[id], key)) return true;
+	}
+
+	return false;
 }
 
 // Function for keeping the image inside the window borders.
