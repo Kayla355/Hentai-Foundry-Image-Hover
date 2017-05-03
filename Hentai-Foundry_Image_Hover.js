@@ -4,7 +4,8 @@
 // @version      0.3.0
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
-// @match        www.hentai-foundry.com/*
+// @match        http://www.hentai-foundry.com/*
+// @match        https://www.hentai-foundry.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
