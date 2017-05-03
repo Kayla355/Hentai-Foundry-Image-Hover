@@ -20,7 +20,7 @@
 
 // Options //
 var imagePosition = "middle-right";   // Default: middle-right   || ´Options are: top-left, top-right, bottom-left, bottom-right, middle-left, middle-right
-var hoverSize     = 800;              // Default: 512            ||  Size of the image that will show up in pixels. Recommend you increase this if you have a larger resolution.
+var hoverSize     = 512;              // Default: 512            ||  Size of the image that will show up in pixels. Recommend you increase this if you have a larger resolution.
 //                                                               ||
 var preloadAll    = false;            // Default: false          ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
 var smartPreload  = true;             // Default: true           ||  Smart pre-load of images by loading only the currently visible elements.
