@@ -1,29 +1,91 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.2.5
+// @version      0.3.0
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        www.hentai-foundry.com/*
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
 // @icon         http://img.hentai-foundry.com/themes/Hentai/favicon.ico
 // @require      http://code.jquery.com/jquery-2.1.3.min.js
 // @require      http://cdn.jsdelivr.net/jquery.visible/1.1.0/jquery.visible.min.js
+// @require      https://raw.githubusercontent.com/Kayla355/MonkeyConfig/master/monkeyconfig.js
 // @history      0.2 Fixed an issue with smartPreload not loading in the image correctly. Also fixed an issue with flash files.
 // @history      0.2.1 Fixed some issues with loading getting stuck.
-// @history	 	 0.2.2 Added more image positions.
-// @history 	 0.2.3 Fixed the images not loading with the new HF theme. Some issues still remain with screen boundries, works when combined with my CSS fixes script.
-// @history 	 0.2.4 Fixed the image boundries and also fixed an issue with the title showing up over the image somtimes.
-// @history 	 0.2.5 Fixed an issue where images were still attempting to cache even after having already been cached.
+// @history      0.2.2 Added more image positions.
+// @history      0.2.3 Fixed the images not loading with the new HF theme. Some issues still remain with screen boundries, works when combined with my CSS fixes script.
+// @history      0.2.4 Fixed the image boundries and also fixed an issue with the title showing up over the image somtimes.
+// @history      0.2.5 Fixed an issue where images were still attempting to cache even after having already been cached.
+// @history      0.3.0 Added MonkeyConfig options config, for actually storing options.
 // ==/UserScript==
 
 // Options //
-var imagePosition = "middle-right";   // Default: middle-right   || ´Options are: top-left, top-right, bottom-left, bottom-right, middle-left, middle-right
-var hoverSize     = 512;              // Default: 512            ||  Size of the image that will show up in pixels. Recommend you increase this if you have a larger resolution.
-//                                                               ||
-var preloadAll    = false;            // Default: false          ||  Pre-load all images at once (Resource Heavy & slow, also won't load any images until finished pre-loading...)
-var smartPreload  = true;             // Default: true           ||  Smart pre-load of images by loading only the currently visible elements.
+var imagePosition;
+var hoverSize;
+var smartPreload;
+var preloadAll;
+
+cfg = new MonkeyConfig({
+    title: 'Hentai Foundry - Image Hover Configuration',
+    menuCommand: true,
+    params: {
+        image_position: {
+            type: 'select',
+            choices: [ 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'middle-left', 'middle-right'],
+            default: 'middle-right'
+        },
+        hover_size: {
+            type: 'number',
+            default: 512
+        },
+        preload_option: {
+            type: 'select',
+            choices: [ 'Smart Preload', 'Preload All', 'none'],
+            default: 'Smart Preload'
+        }
+    },
+    onSave: setOptions
+});
+
+function setOptions() {
+    imagePosition = cfg.get('image_position');
+    hoverSize     = cfg.get('hover_size');
+    smartPreload  = false;
+    preloadAll    = false;
+
+    switch(cfg.get('preload_option')) {
+        case "Smart Preload":
+            smartPreload = true;
+            preloadAll = false;
+            break;
+        case "Preload All":
+            smartPreload = false;
+            preloadAll = true;
+            break;
+        default:
+            smartPreload  = false;
+            preloadAll    = false;
+    }
+}
+setOptions();
+
+switch(cfg.get('preload_option')) {
+    case "Smart Preload":
+        smartPreload = true;
+        preloadAll = false;
+        break;
+    case "Preload All":
+        smartPreload = false;
+        preloadAll = true;
+        break;
+    default:
+        smartPreload  = false;
+        preloadAll    = false;
+}
 
 // Styles //
 GM_addStyle(".image-hover {"
@@ -31,11 +93,6 @@ GM_addStyle(".image-hover {"
             +"z-index: 9999;"
             +"box-shadow: 5px 5px 10px 0px rgba(50, 50, 50, 0.75);"
             +"pointer-events: none;"
-            +"}"
-
-            +".image-hover img {"
-            +"max-height: "+ hoverSize +"px;"
-            +"max-width: "+ hoverSize +"px;"
             +"}"
 
             +".loader {"
@@ -80,12 +137,12 @@ GM_addStyle(".image-hover {"
             +"font-weight: 900;"
             +"line-height: 20px;"
             +"}"
-			+".thumb:hover {"
-			+"position: relative !important;"
-			+"padding: 0;"
-    		+"margin: 0;"
-			+"background-size: cover;"
-    		+"border: 0;"
+            +".thumb:hover {"
+            +"position: relative !important;"
+            +"padding: 0;"
+            +"margin: 0;"
+            +"background-size: cover;"
+            +"border: 0;"
             +"}");
 
 // Variables //
@@ -95,7 +152,7 @@ var imageExt         = [".jpg", ".jpeg", ".png", ".gif"];
 loaded           = {};
 var plProgress       = {current: 0, total: 0, percent: "0%"};
 var loadingStatus    = "inactive";
-var oldTitle		 = "";
+var oldTitle         = "";
 var done;
 // Timers
 var hoverTimer;
@@ -142,9 +199,9 @@ $(".thumb").on({
         var src = "http://pictures.hentai-foundry.com/" + cat + "/" + link.slice(0, -1);
         var obj = {id: id, src: src, target: e.target, from: "hover"};
 
-		// Title issue fix
-		oldTitle = this.title;
-		this.title = "";
+        // Title issue fix
+        oldTitle = this.title;
+        this.title = "";
 
         // Create content div
         $('<div class="image-hover">'
@@ -170,9 +227,9 @@ $(".thumb").on({
         clearTimeout(hoverTimerStart);
         $("div.image-hover").remove();
         hoverTimer = setTimeout(function() { hovering = false; }, 500);
-		// Title issue fix
-		this.title = oldTitle;
-		oldTitle = "";
+        // Title issue fix
+        this.title = oldTitle;
+        oldTitle = "";
     }
 });
 
@@ -220,6 +277,10 @@ function hoverFunc(obj) {
 
     $('#'+id).on("imageLoaded", function() {
         $('#hoverLoader').remove();
+      // Set size of image
+        loaded[id].image.style.maxHeight = hoverSize +"px";
+        loaded[id].image.style.maxWidth  = hoverSize +"px";
+
         $('.image-hover div#'+ obj.id).css("background-color", "#a3a3ab").append(loaded[id].image).show();
         $(obj.target).trigger("mousemove");
     });
@@ -253,10 +314,10 @@ function loadImages() {
         thumbs = $('.thumb').filter(function(e) {
             var id = this.style["background-image"].match(/pid=[0-9]*/);
             id = (id.length > 0) ? parseInt(id[0].slice(4)):null;
-			if(!id || typeof id !== "number") return false;
+            if(!id || typeof id !== "number") return false;
             if($(this).visible( true )) {
                 if(validateImage(id)) {
-                 	console.info("["+id+"]", "Image already loaded:", loaded[id].image.src);
+                    console.info("["+id+"]", "Image already loaded:", loaded[id].image.src);
                 }
                 //console.log("Visible:",$(this).visible( true ));
                 return true;
@@ -420,20 +481,20 @@ function imageExists(url, callback) {
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 // Validate the existing image object
 function validateImage(id) {
-	if(loaded[id] == null) return false;
+    if(loaded[id] == null) return false;
 
-	if(loaded[id].image) return true;
+    if(loaded[id].image) return true;
 
-	if(loaded[id].length > 0) return true;
-	if(loaded[id].length === 0) return false;
+    if(loaded[id].length > 0) return true;
+    if(loaded[id].length === 0) return false;
 
-	if(typeof loaded[id] !== "object") return false;
+    if(typeof loaded[id] !== "object") return false;
 
-	for(var key in loaded[id]) {
-	    if (hasOwnProperty.call(loaded[id], key)) return true;
-	}
+    for(var key in loaded[id]) {
+        if (hasOwnProperty.call(loaded[id], key)) return true;
+    }
 
-	return false;
+    return false;
 }
 
 // Function for keeping the image inside the window borders.
@@ -456,10 +517,10 @@ function keepInside() {
         width:  window.pageXOffset + $(window).width()  - 0,
         naturalHeight: $(window).height(),
         naturalWidth:  $(window).width(),
-		margin: {
-			height: parseFloat($("body").css("marginTop")),
-			width: parseFloat($("body").css("marginLeft"))
-		}
+        margin: {
+            height: parseFloat($("body").css("marginTop")),
+            width: parseFloat($("body").css("marginLeft"))
+        }
     };
 
     // Get image height, relative to mouse position.
@@ -467,11 +528,11 @@ function keepInside() {
         if(imagePosition === "bottom-left" || imagePosition === "bottom-right") {
             image.height = (mouse.Y - 2) + image.naturalHeight;
         } else if(imagePosition === "middle-left" || imagePosition === "middle-right") {
-			image.height = {
-				top: (mouse.Y - 2) - (image.naturalHeight / 2), 	// For checking if colliding with top
-				bottom: (mouse.Y - 2) + (image.naturalHeight / 2) 	// For checking if colliding with bottom
-			};
-		} else {
+            image.height = {
+                top: (mouse.Y - 2) - (image.naturalHeight / 2),     // For checking if colliding with top
+                bottom: (mouse.Y - 2) + (image.naturalHeight / 2)   // For checking if colliding with bottom
+            };
+        } else {
             image.height = (mouse.Y - 2) - image.naturalHeight;
         }
     } catch(e) {
@@ -490,32 +551,32 @@ function keepInside() {
     }
 
     // Check if image height is outside of screen
-	  // If on bottom
+      // If on bottom
     if(imagePosition === "bottom-left" || imagePosition === "bottom-right") {
         if(screen.height <= image.height) {
             mouse.Y = mouse.Y - (image.height - screen.height);
         }
-	  // ELSE IF in middle
+      // ELSE IF in middle
     } else if(imagePosition === "middle-left" || imagePosition === "middle-right") {
-		if(screen.height <= image.height.bottom) {
+        if(screen.height <= image.height.bottom) {
             mouse.Y = mouse.Y - (image.height.bottom - screen.height);
         } else if(image.height.top + screen.naturalHeight - 1 <= screen.height) {
             mouse.Y = mouse.Y - image.height.top + (screen.height - screen.naturalHeight) + 1;
         }
-	  // ELSE on top
-	} else {
+      // ELSE on top
+    } else {
         if(image.height + screen.naturalHeight - 1 <= screen.height) {
             mouse.Y = mouse.Y - image.height + (screen.height - screen.naturalHeight) + 1;
         }
     }
 
     // Check if image width is outside of screen
-	  // IF on right side
+      // IF on right side
     if(imagePosition === "top-right" || imagePosition === "bottom-right" || imagePosition === "middle-right") {
         if(screen.width <= image.width) {
             mouse.X = mouse.X - (image.width - screen.width);
         }
-	  // ELSE on left side
+      // ELSE on left side
     } else {
         if (image.width <= 3){
             mouse.X = mouse.X + ~image.width + 5;
@@ -536,28 +597,28 @@ function keepInside() {
             image.Y = mouse.Y;
             image.X = mouse.X - (image.naturalWidth);
             break;
-		case "bottom-right":
-			image.Y = mouse.Y;
+        case "bottom-right":
+            image.Y = mouse.Y;
             image.X = mouse.X;
-			break;
-		case "middle-left":
-			image.Y = mouse.Y - (image.naturalHeight / 2);
+            break;
+        case "middle-left":
+            image.Y = mouse.Y - (image.naturalHeight / 2);
             image.X = mouse.X - (image.naturalWidth);
-			break;
-		case "middle-right":
-			image.Y = mouse.Y - (image.naturalHeight / 2);
+            break;
+        case "middle-right":
+            image.Y = mouse.Y - (image.naturalHeight / 2);
             image.X = mouse.X;
-        	break;
-		default:
+            break;
+        default:
             image.Y = mouse.Y;
             image.X = mouse.X;
             break;
 
     }
 
-	// Margin offsets
-	image.Y = image.Y - screen.margin.height;
-	image.X = image.X - screen.margin.width;
+    // Margin offsets
+    image.Y = image.Y - screen.margin.height;
+    image.X = image.X - screen.margin.width;
 
     // Set image position
     $("div.image-hover").css({
