@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.3.1
+// @version      0.3.0
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        http://www.hentai-foundry.com/*
@@ -325,7 +325,7 @@ function loadImages() {
 
     thumbs.each(function(i) {
         var e = {target: this};
-        var link = e.target.parentNode.href.match(/(http:\/\/www.hentai-foundry.com\/pictures\/user)(\/.*\/)/)[2];
+        var link = e.target.parentNode.href.match(/(https?:\/\/www.hentai-foundry.com\/pictures\/user)(\/.*\/?)/)[2];
         var id   = link.match(/(?:\/.*\/)(.*)(?:\/)/)[1];
         var cat  = link.slice(1, 2).toLowerCase();
 
