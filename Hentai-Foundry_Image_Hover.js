@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.3.0
+// @version      0.3.1
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        http://www.hentai-foundry.com/*
@@ -22,6 +22,7 @@
 // @history      0.2.4 Fixed the image boundries and also fixed an issue with the title showing up over the image somtimes.
 // @history      0.2.5 Fixed an issue where images were still attempting to cache even after having already been cached.
 // @history      0.3.0 Added MonkeyConfig options config, for actually storing options.
+// @history 	 0.3.1 Quick bug fix from some changes to the website
 // ==/UserScript==
 
 // Options //
@@ -189,7 +190,7 @@ $(".thumb").on({
     },
     mouseenter: function(e) {
         // Create links, id, etc.
-        var link = e.target.parentNode.href.match(/(http:\/\/www.hentai-foundry.com\/pictures\/user)(\/.*\/)/)[2];
+        var link = e.target.parentNode.href.match(/(https?:\/\/www.hentai-foundry.com\/pictures\/user)(\/.*\/?)/)[2];
         var id   = link.match(/(?:\/.*\/)(.*)(?:\/)/)[1];
         var cat  = link.slice(1, 2).toLowerCase();
         if(cat.match(/-/)) {
@@ -255,19 +256,7 @@ if(smartPreload) {
 }
 
 // Listen for update to the pre-load progress.
-$(document).on("plStatusChange", function() {
-    $('.image-hover div div').css({width: plProgress.percent + "%"});
-    $('.image-hover div center').text(plProgress.current+"/"+plProgress.total+" ("+plProgress.percent+"%)");
 
-    if(plProgress.total !== 0) {
-        console.log("Pre-load Progress:", plProgress.current, "/", plProgress.total);
-        if(plProgress.current === plProgress.total) {
-            console.log("Finished Pre-loading all Images.");
-            plProgress.current = 0;
-            plProgress.total   = 0;
-        }
-    }
-});
 
 // Re-usable Functions //
 
