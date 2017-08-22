@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Hentai Foundry - Image Hover
 // @namespace    https://github.com/Kayla355
-// @version      0.3.0
+// @version      0.3.2
 // @description  Fetches a larger version of the image upon hovering over a thumbnail.
 // @author       Kayla355
 // @match        http://www.hentai-foundry.com/*
@@ -22,7 +22,8 @@
 // @history      0.2.4 Fixed the image boundries and also fixed an issue with the title showing up over the image somtimes.
 // @history      0.2.5 Fixed an issue where images were still attempting to cache even after having already been cached.
 // @history      0.3.0 Added MonkeyConfig options config, for actually storing options.
-// @history 	 0.3.1 Quick bug fix from some changes to the website
+// @history      0.3.1 Quick bug fix from some changes to the website.
+// @history      0.3.2 Fixed an issue with the "smart-preload" option.
 // ==/UserScript==
 
 // Options //
@@ -302,8 +303,7 @@ function loadImages() {
         from = "smartload";
         console.log("Filtering!");
         thumbs = $('.thumb').filter(function(e) {
-            var id = this.style["background-image"].match(/pid=[0-9]*/);
-            id = (id.length > 0) ? parseInt(id[0].slice(4)):null;
+            var id = parseInt(this.style["background-image"].replace(/.*pid=([0-9]+).*/, '$1'));
             if(!id || typeof id !== "number") return false;
             if($(this).visible( true )) {
                 if(validateImage(id)) {
